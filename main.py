@@ -40,7 +40,7 @@ indicator_options = {
 
 # Dash app
 app = dash.Dash(__name__)
-
+server = app.server
 graph_config = {'scrollZoom': True}
 
 # app.layout = html.Div([
@@ -156,6 +156,4 @@ def update_graph(selected_participants, selected_indicators):
 
 
 if __name__ == '__main__':
-
-
     app.run(debug=True)
