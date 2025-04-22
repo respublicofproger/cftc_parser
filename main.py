@@ -6,6 +6,8 @@ import numpy as np
 import update_data
 import requests
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Обновляем данные:
 update_data.update_history_file()
@@ -40,14 +42,21 @@ indicator_options = {
     'percentage_difference': "Процентная разница между участниками"
 }
 
+def setup_session():
+    session = requests.Session()
+    retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    return session
+    
 # Функция для получения данных BTC/USDT с Binance
 def get_btc_data():
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
+        session = setup_session()
         url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=500'
-        response = requests.get(url, headers=headers, timeout=10)
+        response = session.get(url, timeout=15)
         response.raise_for_status()  # Проверка на ошибки HTTP
         data = response.json()
         
