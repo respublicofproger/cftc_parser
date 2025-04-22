@@ -42,14 +42,25 @@ indicator_options = {
 
 # Функция для получения данных BTC/USDT с Binance
 def get_btc_data():
-    url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=500'
-    data = requests.get(url).json()
-    df_btc = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 
-                                         'close_time', 'quote_asset_volume', 'trades', 
-                                         'taker_buy_base', 'taker_buy_quote', 'ignore'])
-    df_btc['timestamp'] = pd.to_datetime(df_btc['timestamp'], unit='ms')
-    df_btc['close'] = df_btc['close'].astype(float)
-    return df_btc
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=500'
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()  # Проверка на ошибки HTTP
+        data = response.json()
+        
+        df_btc = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 
+                                           'close_time', 'quote_asset_volume', 'trades', 
+                                           'taker_buy_base', 'taker_buy_quote', 'ignore'])
+        df_btc['timestamp'] = pd.to_datetime(df_btc['timestamp'], unit='ms')
+        df_btc['close'] = df_btc['close'].astype(float)
+        return df_btc
+    except Exception as e:
+        print(f"Error fetching BTC data: {e}")
+        # Возвращаем пустой DataFrame с той же структурой
+        return pd.DataFrame(columns=['timestamp', 'close'])
 
 # Получаем данные BTC
 df_btc = get_btc_data()
