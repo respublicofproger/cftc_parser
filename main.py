@@ -4,8 +4,10 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import update_data
+import requests
+from datetime import datetime
 
-#Обновляем данные:
+# Обновляем данные:
 update_data.update_history_file()
 # Загрузка данных
 df = pd.read_excel("history.xlsx", sheet_name="XLS")
@@ -35,17 +37,27 @@ indicator_options = {
     'percent_delta': 'Процентная дельта',
     'crossover': 'Кроссовер (1 / -1)',
     'divergence_index': 'Нормализованная абсолютная разница',
-    'percentage_difference':"Процентная разница между участниками"
+    'percentage_difference': "Процентная разница между участниками"
 }
+
+# Функция для получения данных BTC/USDT с Binance
+def get_btc_data():
+    url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=500'
+    data = requests.get(url).json()
+    df_btc = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 
+                                         'close_time', 'quote_asset_volume', 'trades', 
+                                         'taker_buy_base', 'taker_buy_quote', 'ignore'])
+    df_btc['timestamp'] = pd.to_datetime(df_btc['timestamp'], unit='ms')
+    df_btc['close'] = df_btc['close'].astype(float)
+    return df_btc
+
+# Получаем данные BTC
+df_btc = get_btc_data()
 
 # Dash app
 app = dash.Dash(__name__)
 server = app.server
 graph_config = {'scrollZoom': True}
-
-# app.layout = html.Div([
-#     dcc.Graph(id='net-position-graph', figure=fig, config=graph_config)
-# ])
 
 app.layout = html.Div([
     html.Div([
@@ -66,10 +78,28 @@ app.layout = html.Div([
     ], style={'width': '20%', 'display': 'inline-block', 'verticalAlign': 'top', 'padding': '20px'}),
 
     html.Div([
-        dcc.Graph(id='main-graph', config=graph_config)
+        dcc.Graph(id='main-graph', config=graph_config),
+        dcc.Graph(
+            id='btc-graph',
+            figure={
+                'data': [
+                    go.Scatter(
+                        x=df_btc['timestamp'],
+                        y=df_btc['close'],
+                        name='BTC/USDT Price'
+                    )
+                ],
+                'layout': go.Layout(
+                    title='BTC/USDT Price (Binance)',
+                    xaxis={'title': 'Date'},
+                    yaxis={'title': 'Price (USDT)'},
+                    template="plotly_dark"
+                )
+            },
+            config=graph_config
+        )
     ], style={'width': '75%', 'display': 'inline-block'})
 ])
-
 
 @app.callback(
     Output('main-graph', 'figure'),
@@ -136,14 +166,11 @@ def update_graph(selected_participants, selected_indicators):
     fig.update_layout(
         title_text="Net Positions & Divergence Analysis",
         xaxis_title="Date",
-        height=800, width=1000,
+        height=600,
         template="plotly_dark",
         dragmode="pan",
         hovermode="x unified",
         margin=dict(l=50, r=50, t=50, b=50),
-        autosize=False,
-        clickmode="event+select",
-        uirevision=True,
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -153,7 +180,6 @@ def update_graph(selected_participants, selected_indicators):
         )
     )
     return fig
-
 
 if __name__ == '__main__':
     app.run(debug=True)
