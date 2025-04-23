@@ -39,7 +39,8 @@ indicator_options = {
     'percent_delta': 'Процентная дельта',
     'crossover': 'Кроссовер (1 / -1)',
     'divergence_index': 'Нормализованная абсолютная разница',
-    'percentage_difference': "Процентная разница между участниками"
+    'percentage_difference': "Процентная разница между участниками",
+    'division':"Деление"
 }
 
 def setup_session():
@@ -104,14 +105,16 @@ app.layout = html.Div([
                     go.Scatter(
                         x=df_btc['timestamp'],
                         y=df_btc['close'],
-                        name='BTC/USDT Price'
+                        name='BTC/USDT'
                     )
                 ],
                 'layout': go.Layout(
-                    title='BTC/USDT Price (CRYPTO COMPARE)',
+                    title='BTC/USDT',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Price (USDT)'},
-                    template="plotly_dark"
+                    template="plotly_dark",
+                    hovermode="x unified",
+                    dragmode="pan"
                 )
             },
             config=graph_config
@@ -170,6 +173,8 @@ def update_graph(selected_participants, selected_indicators):
             net_p2 = p2_series  # предполагая, что p2_series уже net позиция
             avg_pos = (net_p1 + net_p2) / 2
             y = (abs(net_p1 - net_p2) / avg_pos.replace(0, np.nan)) * 100
+        elif ind == 'division':
+            y = (p1_series/p2_series) * 1000
         else:
             continue
 
@@ -184,7 +189,7 @@ def update_graph(selected_participants, selected_indicators):
     fig.update_layout(
         title_text="Net Positions & Divergence Analysis",
         xaxis_title="Date",
-        height=600,
+        height=500,
         template="plotly_dark",
         dragmode="pan",
         hovermode="x unified",
