@@ -109,7 +109,7 @@ app.layout = html.Div([
                     )
                 ],
                 'layout': go.Layout(
-                    title='BTC/USDT Price (Binance)',
+                    title='BTC/USDT Price (CRYPTO COMPARE)',
                     xaxis={'title': 'Date'},
                     yaxis={'title': 'Price (USDT)'},
                     template="plotly_dark"
