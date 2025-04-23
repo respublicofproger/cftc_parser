@@ -49,26 +49,25 @@ def setup_session():
     return session
     
 # Функция для получения данных BTC/USDT с Binance
+import pandas as pd
+import requests
+
+# Альтернатива: CoinGecko API
+import pandas as pd
+import yfinance as yf
+
 def get_btc_data():
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        session = setup_session()
-        url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=500'
-        response = session.get(url, timeout=15)
-        response.raise_for_status()  # Проверка на ошибки HTTP
-        data = response.json()
+        url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=2000"
+        response = requests.get(url)
+        data = response.json()['Data']['Data']
         
-        df_btc = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 
-                                           'close_time', 'quote_asset_volume', 'trades', 
-                                           'taker_buy_base', 'taker_buy_quote', 'ignore'])
-        df_btc['timestamp'] = pd.to_datetime(df_btc['timestamp'], unit='ms')
-        df_btc['close'] = df_btc['close'].astype(float)
-        return df_btc
+        df = pd.DataFrame(data)
+        df['timestamp'] = pd.to_datetime(df['time'], unit='s')
+        df = df.rename(columns={'close': 'close'})
+        return df[['timestamp', 'close']]
     except Exception as e:
-        print(f"Error fetching BTC data: {e}")
-        # Возвращаем пустой DataFrame с той же структурой
+        print(f"Error fetching BTC data from CryptoCompare: {e}")
         return pd.DataFrame(columns=['timestamp', 'close'])
 
 # Получаем данные BTC
