@@ -53,8 +53,7 @@ import pandas as pd
 import requests
 
 # Альтернатива: CoinGecko API
-import pandas as pd
-import yfinance as yf
+
 
 def get_btc_data():
     try:
